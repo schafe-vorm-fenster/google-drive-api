@@ -33,7 +33,7 @@ export async function uploadStream(buffer: any, fileId: string) {
  * @swagger
  * /api/upload/{fileId}:
  *   get:
- *     summary: Uploads a file from google drive to cloudinary.
+ *     summary: Uploads a file from google drive to cloudinary. Mention that uploading to cloudinary is restricted to 10MB per file.
  *     description:
  *     tags:
  *       - Google Drive
@@ -52,6 +52,8 @@ export async function uploadStream(buffer: any, fileId: string) {
  *         description: Missing file id parameter. Please provide a file id as url encoded string.
  *       404:
  *         description: Could not find or load a file.
+ *       500:
+ *         description: Could not upload file.
  */
 export default async function handler(
   req: NextApiRequest,
@@ -94,10 +96,19 @@ export default async function handler(
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
 
-  const cloudinaryResponse: any = await uploadStream(
-    googleDriveFile.binary,
-    googleDriveFile.id as string
-  );
+  let cloudinaryResponse: any = undefined;
+
+  try {
+    cloudinaryResponse = await uploadStream(
+      googleDriveFile.binary,
+      googleDriveFile.id as string
+    );
+  } catch (error: Error | any) {
+    console.log("catch error", error);
+    return res
+      .status(500)
+      .end(error?.message || `Could not upload file (${id}).`);
+  }
 
   return res
     .status(200)
