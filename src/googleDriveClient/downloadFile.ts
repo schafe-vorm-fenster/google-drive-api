@@ -59,9 +59,6 @@ export const downloadFile = async (
 
   if (!localFile?.id) throw new Error(`Could not fetch meta data.`);
 
-  console.log("meta data");
-  console.log(localFile);
-
   // check mime type
   if (localFile.mimeType == "application/vnd.google-apps.folder")
     throw new Error(`Given id represents a folder not a file.`);
@@ -81,9 +78,6 @@ export const downloadFile = async (
   if (!fileBinary) throw new Error(`Could not fetch any binary.`);
 
   localFile.binary = fileBinary;
-
-  console.log("binary data");
-  console.log(localFile.binary);
 
   if (localFile) {
     return localFile;

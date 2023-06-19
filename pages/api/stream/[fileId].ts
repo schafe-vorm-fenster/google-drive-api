@@ -58,8 +58,6 @@ export default async function handler(
       .end(error?.message || `Could not fetch file (${id}).`);
   }
 
-  console.log(googleDriveFile);
-
   if (!googleDriveFile || !googleDriveFile?.binary) {
     return res.status(404).end(`Could not find a matching file (${id}).`);
   }

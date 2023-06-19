@@ -1,3 +1,4 @@
+import Jimp from "jimp";
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
   GoogleDriveDownloadFileResponse,
@@ -5,6 +6,9 @@ import {
 } from "../../../src/googleDriveClient/downloadFile";
 import { CacheControlHeader } from "../../../src/config/CacheControlHeader";
 import { v2 as cloudinary } from "cloudinary";
+import { Duplex, Stream } from "stream";
+import { promisify } from "util";
+const { Readable } = require("stream");
 
 export interface CloudinaryUploadResponse {
   id: string;
@@ -13,7 +17,15 @@ export interface CloudinaryUploadResponse {
   url: string;
 }
 
-const { Readable } = require("stream");
+async function stream2buffer(stream: Stream): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    const _buf = Array<any>();
+
+    stream.on("data", (chunk) => _buf.push(chunk));
+    stream.on("end", () => resolve(Buffer.concat(_buf)));
+    stream.on("error", (err) => reject(`error converting stream - ${err}`));
+  });
+}
 
 export async function uploadStream(buffer: any, fileId: string) {
   return new Promise((res, rej) => {
@@ -84,10 +96,37 @@ export default async function handler(
       .end(error?.message || `Could not fetch file (${id}).`);
   }
 
-  console.log(googleDriveFile);
-
   if (!googleDriveFile || !googleDriveFile?.binary) {
     return res.status(404).end(`Could not find a matching file (${id}).`);
+  }
+
+  // check size
+  let newBinary: Duplex | void = undefined;
+  if (parseInt(googleDriveFile?.size as string) >= 10485760) {
+    if (googleDriveFile?.mimeType?.includes("image")) {
+      console.log(
+        "Image file is larger than 10MB, so resize it to max. 2000px width."
+      );
+      const imagAsBuffer = await stream2buffer(googleDriveFile.binary);
+      newBinary = await Jimp.read(imagAsBuffer)
+        .then((img) => {
+          const r = img.resize(2000, Jimp.AUTO);
+          const b = promisify(r.getBuffer.bind(r));
+          return b(googleDriveFile?.mimeType as string);
+        })
+        .then((buff) => {
+          const stream = new Duplex();
+          stream.push(buff);
+          stream.push(null);
+          return stream;
+        })
+        .catch((err) => {
+          // Handle an exception.
+          console.error(err);
+        });
+    } else {
+      return res.status(500).end(`File is too large. Max size is 10MB.`);
+    }
   }
 
   cloudinary.config({
@@ -100,7 +139,7 @@ export default async function handler(
 
   try {
     cloudinaryResponse = await uploadStream(
-      googleDriveFile.binary,
+      newBinary || googleDriveFile.binary,
       googleDriveFile.id as string
     );
   } catch (error: Error | any) {
