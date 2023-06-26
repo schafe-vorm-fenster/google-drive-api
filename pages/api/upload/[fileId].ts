@@ -24,7 +24,7 @@ export interface CloudinaryUploadResponse {
  * @swagger
  * /api/upload/{fileId}:
  *   get:
- *     summary: Uploads a file from google drive to cloudinary. Mention that uploading to cloudinary is restricted to 10MB per file.
+ *     summary: Uploads a file from google drive to cloudinary. Mention that uploading to cloudinary is restricted to 10MB per file. Large image files will be resizes to max. 2000px width.
  *     description:
  *     tags:
  *       - Google Drive

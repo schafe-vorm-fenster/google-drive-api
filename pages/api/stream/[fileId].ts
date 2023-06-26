@@ -11,7 +11,7 @@ import { resizeImage } from "../../../src/imageTools/resizeImage";
  * @swagger
  * /api/stream/{fileId}:
  *   get:
- *     summary: Streams trough a file from google drive. Mention that streaming is restricted to 4MB per file.
+ *     summary: Streams trough a file from google drive. Mention that streaming is restricted to 4MB per file. Large image files will be resizes to max. 1500px width.
  *     description:
  *     tags:
  *       - Google Drive
