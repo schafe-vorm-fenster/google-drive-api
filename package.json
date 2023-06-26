@@ -1,6 +1,6 @@
 {
   "name": "@schafevormfenster/google-drive-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An API middleware to support the retrieval and delivery of Google Drive files for web-based distribution.",
   "main": "index.js",
   "homepage": "https://github.com/schafe-vorm-fenster/google-drive-api",
